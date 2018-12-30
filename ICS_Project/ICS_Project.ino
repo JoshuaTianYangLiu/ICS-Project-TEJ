@@ -22,7 +22,10 @@ void loop() {
   buttonClicks();
   if (!startTime) {
     lightSensor();
+  }else{
+    CircuitPlayground.clearPixels();
   }
+  
   // Serial.println(CircuitPlayground.mic.soundPressureLevel(10));
   /*
   Serial.print(95);
@@ -45,10 +48,7 @@ void loop() {
   */
   // Uncomment these, they will give you a base line for 95, 90, 80, and 50
   if (isDoubleClap()){
-    greenLight();
-    delay(500);
-  }else{
-    redLight();
+      //Turn on lights
   }
 }
 
@@ -120,7 +120,11 @@ void weWishYouAMerry() {
 }
 
 void capPassword() {
-  int password[] = {3, 4, 5, 6, 7, 8};
+  int doorPassword[] = {2,2,2,2,2,2};
+  int togglePassword[]={1,1,1,1,1};
+  static int savedPassword[6];
+  static boolean doorPassCorrect = true;
+  static boolean togglePassCorrect = true;
   static int tL, tR, bL, bR = 0;
   static int passRounds = 0;
   static boolean passEntered = false;
@@ -128,9 +132,14 @@ void capPassword() {
   static int attempts = 0;
   static long timeStart = millis();
   long timeEnd = 0 ;
+  static boolean resetPassStatus = true;
 
 
-
+  if(resetPassStatus){
+    doorPassCorrect = true;
+    togglePassCorrect = true;
+    resetPassStatus=false;
+  }
   if (startTime) {
 
     timeEnd = millis();
@@ -138,34 +147,121 @@ void capPassword() {
     timeStart = millis();
   }
   if (tLPressed() or tRPressed() or bLPressed() or bRPressed()) {
-    if (!passEntered) {
-      startTime = true;
+    if (tLPressed()) {
+      tL = 1;
+      CircuitPlayground.setPixelColor(0, 255, 0, 255);
+      CircuitPlayground.setPixelColor(1, 255, 0, 255);
     }
-    toggleValues(&tL, &tR, &bL, &bR);
+    if (tRPressed()) {
+      tR = 1;
+      CircuitPlayground.setPixelColor(8, 255, 0, 255);
+      CircuitPlayground.setPixelColor(9, 255, 0, 255);
+    }
+    if (bLPressed()) {
+      bL = 1;
+      CircuitPlayground.setPixelColor(3, 255, 0, 255);
+      CircuitPlayground.setPixelColor(4, 255, 0, 255);
+    }
+    if (bRPressed()) {
+      bR = 1;
+      CircuitPlayground.setPixelColor(5, 255, 0, 255);
+      CircuitPlayground.setPixelColor(6, 255, 0, 255);
+    }
+    startTime = true;
     passEntered = true;
+    savedPassword[passRounds]=tL + tR * 2 + bL * 4 + bR * 8;
   } else {
     if (passEntered) {
-      if (tL + tR * 2 + bL * 4 + bR * 8 == password[passRounds] and timeEnd - timeStart < 30000) {
-        greenLight();
-        delay(200);
-        CircuitPlayground.clearPixels();
-        delay(200);
-        greenLight();
-        delay(200);
-        CircuitPlayground.clearPixels();
-        delay(200);
-        greenLight();
-        delay(200);
-        CircuitPlayground.clearPixels();
-        delay(200);
-        CircuitPlayground.playTone(220, 500);
-        CircuitPlayground.playTone(277, 500);
-        CircuitPlayground.playTone(329, 500);
-        passEntered = false;
-        setCornerValues(&tL, &tR, &bL, &bR, 0);
-        passRounds++;
-        if (passRounds == sizeof(password) / 2) {
-          //Run code to disable password and open door.
+      if ( timeEnd - timeStart < 120000) {
+        if(!(savedPassword[passRounds]==togglePassword[passRounds] or savedPassword[passRounds]==doorPassword[passRounds])){
+          redLight();
+          delay(200);
+          CircuitPlayground.clearPixels();
+          delay(200);
+          redLight();
+          delay(200);
+          CircuitPlayground.clearPixels();
+          delay(200);
+          redLight();
+          delay(200);
+          CircuitPlayground.clearPixels();
+          delay(200);
+          CircuitPlayground.playTone(329, 500);
+          CircuitPlayground.playTone(277, 500);
+          CircuitPlayground.playTone(220, 500);
+          passEntered = false;
+          setCornerValues(&tL, &tR, &bL, &bR, 0);
+          passRounds = 0;
+          attempts++;
+          resetPassStatus=true;
+          if (attempts == 3) {
+            for (int x = 0; x < 10; x++) {
+              CircuitPlayground.playTone(220, 250);
+              CircuitPlayground.playTone(340, 250);
+            }
+            attempts = 0;
+            startTime = false;
+          }
+        }/*else{
+          passEntered = false;
+          setCornerValues(&tL, &tR, &bL, &bR, 0);
+          passRounds++;
+          */
+        if(passEntered){
+          if(savedPassword[passRounds]==doorPassword[passRounds] and doorPassCorrect){
+            if(passRounds+1 == sizeof(doorPassword)/sizeof(int)){
+              greenLight();
+              delay(200);
+              CircuitPlayground.clearPixels();
+              delay(200);
+              greenLight();
+              delay(200);
+              CircuitPlayground.clearPixels();
+              delay(200);
+              greenLight();
+              delay(200);
+              CircuitPlayground.clearPixels();
+              passEntered = false;
+              setCornerValues(&tL, &tR, &bL, &bR, 0);
+              startTime=false;
+              passRounds=-1;
+              attempts = 0;
+              resetPassStatus=true;
+              //Open door
+            }
+            passRounds++;
+            passEntered = false;
+          }else{
+            doorPassCorrect = false;
+          }
+        }
+        if(passEntered){
+          if(savedPassword[passRounds]==togglePassword[passRounds] and togglePassCorrect){
+            if(passRounds+1 == sizeof(togglePassword)/sizeof(int)){
+              greenLight();
+              delay(200);
+              CircuitPlayground.clearPixels();
+              delay(200);
+              greenLight();
+              delay(200);
+              CircuitPlayground.clearPixels();
+              delay(200);
+              greenLight();
+              delay(200);
+              CircuitPlayground.clearPixels();
+              passEntered = false;
+              setCornerValues(&tL, &tR, &bL, &bR, 0);
+              startTime=false;
+              passRounds=-1;
+              attempts = 0;
+              resetPassStatus=true;
+              //Open toggle system
+            }
+          passRounds++;
+          passEntered = false;
+          }else{
+            togglePassCorrect = false;
+          }
         }
       } else {
         redLight();
@@ -187,6 +283,8 @@ void capPassword() {
         setCornerValues(&tL, &tR, &bL, &bR, 0);
         passRounds = 0;
         attempts++;
+        doorPassCorrect = true;
+        togglePassCorrect = true;
         if (attempts == 3) {
           for (int x = 0; x < 10; x++) {
             CircuitPlayground.playTone(220, 250);
@@ -211,29 +309,6 @@ void capPassword() {
   //  if ((tLPressed()==tLPassword[passRounds]) and (tRPressed()==tRPassword[passRounds]) and (bLPressed()==bLPassword[passRounds]) and (bRPressed()== bRPassword[passRounds])){
   //      passRounds++;
   //  }
-}
-
-void toggleValues(int *tL, int *tR, int *bL, int *bR) {
-  if (tLPressed()) {
-    *tL = 1;
-    CircuitPlayground.setPixelColor(0, 255, 0, 255);
-    CircuitPlayground.setPixelColor(1, 255, 0, 255);
-  }
-  if (tRPressed()) {
-    *tR = 1;
-    CircuitPlayground.setPixelColor(8, 255, 0, 255);
-    CircuitPlayground.setPixelColor(9, 255, 0, 255);
-  }
-  if (bLPressed()) {
-    *bL = 1;
-    CircuitPlayground.setPixelColor(3, 255, 0, 255);
-    CircuitPlayground.setPixelColor(4, 255, 0, 255);
-  }
-  if (bRPressed()) {
-    *bR = 1;
-    CircuitPlayground.setPixelColor(5, 255, 0, 255);
-    CircuitPlayground.setPixelColor(6, 255, 0, 255);
-  }
 }
 
 void setCornerValues(int *tL, int *tR, int *bL, int *bR, int value) {
@@ -346,31 +421,19 @@ boolean clap() {
   //Moves pos 14 to 13, 13 to 12, 12 to 11, 10 to 9 ect. Shifts all values one down the table
 
   s[FINETUNE - 1] = CircuitPlayground.mic.soundPressureLevel(10);
-  Serial.println(s[2]);
+//  Serial.println(s[2]);
   //Wave length of sound
   //Below decides if its a clap
   if (detectRise(s[1], s[2]) and detectFall(s[2], s[FINETUNE - 1]) and noLargeBumps(s, FINETUNE - 2)) {
-    Serial.print(100);
-    Serial.print(" ");
+//    Serial.print(100);
+//    Serial.print(" ");
         return true;
     //Shows a spike on the graph when a clap is heard
   } else {
-    Serial.print(30);
-    Serial.print(" ");
+//    Serial.print(30);
+//    Serial.print(" ");
         return false;
     //Baseline
-  }
-}
-
-void greenLight() {
-  for (int x = 0; x < 10; x++) {
-    CircuitPlayground.setPixelColor(x, 0, 255, 0);
-  }
-}
-
-void redLight() {
-  for (int x = 0; x < 10; x++) {
-    CircuitPlayground.setPixelColor(x, 255, 0, 0);
   }
 }
 
