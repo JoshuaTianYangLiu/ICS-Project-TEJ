@@ -22,8 +22,6 @@ void loop() {
   buttonClicks();
   if (!startTime) {
     lightSensor();
-  }else{
-    CircuitPlayground.clearPixels();
   }
   
   // Serial.println(CircuitPlayground.mic.soundPressureLevel(10));
@@ -147,6 +145,9 @@ void capPassword() {
     timeStart = millis();
   }
   if (tLPressed() or tRPressed() or bLPressed() or bRPressed()) {
+    if(!passEntered){
+      CircuitPlayground.clearPixels();
+    }
     if (tLPressed()) {
       tL = 1;
       CircuitPlayground.setPixelColor(0, 255, 0, 255);
@@ -174,21 +175,7 @@ void capPassword() {
     if (passEntered) {
       if ( timeEnd - timeStart < 120000) {
         if(!(savedPassword[passRounds]==togglePassword[passRounds] or savedPassword[passRounds]==doorPassword[passRounds])){
-          redLight();
-          delay(200);
-          CircuitPlayground.clearPixels();
-          delay(200);
-          redLight();
-          delay(200);
-          CircuitPlayground.clearPixels();
-          delay(200);
-          redLight();
-          delay(200);
-          CircuitPlayground.clearPixels();
-          delay(200);
-          CircuitPlayground.playTone(329, 500);
-          CircuitPlayground.playTone(277, 500);
-          CircuitPlayground.playTone(220, 500);
+          flashIncorrect();
           passEntered = false;
           setCornerValues(&tL, &tR, &bL, &bR, 0);
           passRounds = 0;
@@ -201,32 +188,25 @@ void capPassword() {
             }
             attempts = 0;
             startTime = false;
+          }else{
+            CircuitPlayground.playTone(329, 500);
+            CircuitPlayground.playTone(277, 500);
+            CircuitPlayground.playTone(220, 500);
           }
-        }/*else{
-          passEntered = false;
-          setCornerValues(&tL, &tR, &bL, &bR, 0);
-          passRounds++;
-          */
+        }
         if(passEntered){
           if(savedPassword[passRounds]==doorPassword[passRounds] and doorPassCorrect){
             if(passRounds+1 == sizeof(doorPassword)/sizeof(int)){
-              greenLight();
-              delay(200);
-              CircuitPlayground.clearPixels();
-              delay(200);
-              greenLight();
-              delay(200);
-              CircuitPlayground.clearPixels();
-              delay(200);
-              greenLight();
-              delay(200);
-              CircuitPlayground.clearPixels();
+              flashCorrect();
               passEntered = false;
               setCornerValues(&tL, &tR, &bL, &bR, 0);
               startTime=false;
               passRounds=-1;
               attempts = 0;
               resetPassStatus=true;
+              CircuitPlayground.playTone(220, 500);
+              CircuitPlayground.playTone(277, 500);
+              CircuitPlayground.playTone(329, 500); 
               //Open door
             }
             passRounds++;
@@ -238,23 +218,16 @@ void capPassword() {
         if(passEntered){
           if(savedPassword[passRounds]==togglePassword[passRounds] and togglePassCorrect){
             if(passRounds+1 == sizeof(togglePassword)/sizeof(int)){
-              greenLight();
-              delay(200);
-              CircuitPlayground.clearPixels();
-              delay(200);
-              greenLight();
-              delay(200);
-              CircuitPlayground.clearPixels();
-              delay(200);
-              greenLight();
-              delay(200);
-              CircuitPlayground.clearPixels();
+              flashCorrect();
               passEntered = false;
               setCornerValues(&tL, &tR, &bL, &bR, 0);
               startTime=false;
               passRounds=-1;
               attempts = 0;
               resetPassStatus=true;
+              CircuitPlayground.playTone(220, 500);
+              CircuitPlayground.playTone(277, 500);
+              CircuitPlayground.playTone(329, 500); 
               //Open toggle system
             }
           passRounds++;
@@ -264,21 +237,7 @@ void capPassword() {
           }
         }
       } else {
-        redLight();
-        delay(200);
-        CircuitPlayground.clearPixels();
-        delay(200);
-        redLight();
-        delay(200);
-        CircuitPlayground.clearPixels();
-        delay(200);
-        redLight();
-        delay(200);
-        CircuitPlayground.clearPixels();
-        delay(200);
-        CircuitPlayground.playTone(329, 500);
-        CircuitPlayground.playTone(277, 500);
-        CircuitPlayground.playTone(220, 500);
+        flashIncorrect();
         passEntered = false;
         setCornerValues(&tL, &tR, &bL, &bR, 0);
         passRounds = 0;
@@ -292,6 +251,10 @@ void capPassword() {
           }
           attempts = 0;
           startTime = false;
+        }else{
+          CircuitPlayground.playTone(329, 500);
+          CircuitPlayground.playTone(277, 500);
+          CircuitPlayground.playTone(220, 500);
         }
       }
     } else {
@@ -306,9 +269,6 @@ void capPassword() {
     }
     startTime = false;
   }
-  //  if ((tLPressed()==tLPassword[passRounds]) and (tRPressed()==tRPassword[passRounds]) and (bLPressed()==bLPassword[passRounds]) and (bRPressed()== bRPassword[passRounds])){
-  //      passRounds++;
-  //  }
 }
 
 void setCornerValues(int *tL, int *tR, int *bL, int *bR, int value) {
@@ -350,7 +310,32 @@ boolean bRPressed() {
     return false;
   }
 }
-
+void flashIncorrect(){
+  redLight();
+  delay(200);
+  CircuitPlayground.clearPixels();
+  delay(200);
+  redLight();
+  delay(200);
+  CircuitPlayground.clearPixels();
+  delay(200);
+  redLight();
+  delay(200);
+  CircuitPlayground.clearPixels();
+}
+void flashCorrect(){
+  greenLight();
+  delay(200);
+  CircuitPlayground.clearPixels();
+  delay(200);
+  greenLight();
+  delay(200);
+  CircuitPlayground.clearPixels();
+  delay(200);
+  greenLight();
+  delay(200);
+  CircuitPlayground.clearPixels();
+}
 
 void greenLight() {
   for (int x = 0; x < 10; x++) {
