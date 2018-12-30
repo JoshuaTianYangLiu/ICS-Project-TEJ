@@ -1,5 +1,6 @@
 #include <Adafruit_CircuitPlayground.h>
 #include <math.h>
+#define FINETUNE 13
 boolean open = false;
 boolean startTime = false;
 void setup() {
@@ -22,7 +23,33 @@ void loop() {
   if (!startTime) {
     lightSensor();
   }
-  Serial.println(CircuitPlayground.mic.soundPressureLevel(10));
+  // Serial.println(CircuitPlayground.mic.soundPressureLevel(10));
+  /*
+  Serial.print(95);
+  Serial.print(" ");
+  Serial.print(90);
+  Serial.print(" ");
+  Serial.print(80);
+  Serial.print(" ");
+  Serial.print(75);
+  Serial.print(" ");
+  Serial.print(70);
+  Serial.print(" ");
+  Serial.print(65);
+  Serial.print(" ");
+  
+  Serial.print(60);
+  Serial.print(" ");
+  Serial.print(48);
+  Serial.print(" ");
+  */
+  // Uncomment these, they will give you a base line for 95, 90, 80, and 50
+  if (isDoubleClap()){
+    greenLight();
+    delay(500);
+  }else{
+    redLight();
+  }
 }
 
 void buttonClicks() {
@@ -282,3 +309,94 @@ void lightSensor() {
     }
   }
 }
+boolean isDoubleClap(){
+  static boolean firstClap = false;
+  static long firstClapTime;
+  if (clap()){
+    if(firstClap == false){
+      firstClapTime = millis();
+      firstClap = true;
+    }
+    else{
+      if ( millis()-firstClapTime >500){
+        firstClapTime= millis();
+        firstClap = true;
+      }else{
+        firstClap = false;
+        return true;
+      }
+    }
+  }
+  else{
+    if (firstClap){
+       if (millis()-firstClapTime>500){
+          firstClap = false;
+       }
+    } 
+  }
+  return false;
+}
+
+boolean clap() {
+  static int s[FINETUNE] = {0};
+
+  for (int x = 0; x < FINETUNE - 1; x++) {
+    s[x] = s[x + 1];
+  }
+  //Moves pos 14 to 13, 13 to 12, 12 to 11, 10 to 9 ect. Shifts all values one down the table
+
+  s[FINETUNE - 1] = CircuitPlayground.mic.soundPressureLevel(10);
+  Serial.println(s[2]);
+  //Wave length of sound
+  //Below decides if its a clap
+  if (detectRise(s[1], s[2]) and detectFall(s[2], s[FINETUNE - 1]) and noLargeBumps(s, FINETUNE - 2)) {
+    Serial.print(100);
+    Serial.print(" ");
+        return true;
+    //Shows a spike on the graph when a clap is heard
+  } else {
+    Serial.print(30);
+    Serial.print(" ");
+        return false;
+    //Baseline
+  }
+}
+
+void greenLight() {
+  for (int x = 0; x < 10; x++) {
+    CircuitPlayground.setPixelColor(x, 0, 255, 0);
+  }
+}
+
+void redLight() {
+  for (int x = 0; x < 10; x++) {
+    CircuitPlayground.setPixelColor(x, 255, 0, 0);
+  }
+}
+
+boolean noLargeBumps(int tick[], int arrSize) {
+  for ( int i = 2; i < arrSize - 1; i++) {
+    if (tick[i + 1] - tick[i] > 5) {
+      return false;
+    }
+  }
+  return true;
+}
+
+
+boolean detectRise(int tick1, int tick2) {
+  if ((tick2 - tick1) > 30) {
+    return true;
+  } else {
+    return false;
+  }
+}
+//Compares the rise between the two "ticks" beside each other
+boolean detectFall(int tick1, int tick2) {
+  if ((tick1 - tick2) > 10) {
+    return true;
+  } else {
+    return false;
+  }
+}
+//Compares the fall between the height of the clap and the finetune you set - 2 "ticks" beside each other
