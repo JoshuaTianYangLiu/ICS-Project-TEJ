@@ -19,12 +19,13 @@ void loop() {
   //  Serial.print("Capsense #9: "); Serial.println(CircuitPlayground.readCap(9));
   //  Serial.print("Capsense #10: "); Serial.println(CircuitPlayground.readCap(10));
   capPassword();
-  buttonClicks();
   if (!startTime) {
     lightSensor();
+    buttonClicks();
+      if (isDoubleClap()){
+      //Turn on lights
+    }
   }
-  
-  // Serial.println(CircuitPlayground.mic.soundPressureLevel(10));
   /*
   Serial.print(95);
   Serial.print(" ");
@@ -45,9 +46,6 @@ void loop() {
   Serial.print(" ");
   */
   // Uncomment these, they will give you a base line for 95, 90, 80, and 50
-  if (isDoubleClap()){
-      //Turn on lights
-  }
 }
 
 void buttonClicks() {
